@@ -224,13 +224,562 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/04/02/netty/5-Netty%E5%BF%83%E8%B7%B3%E4%B8%8E%E6%96%AD%E7%BA%BF%E9%87%8D%E8%BF%9E/" target="_self">
-          Netty-心跳原理
+        <a href="/2024/04/21/Netty/14-Netty%E5%86%85%E5%AD%98%E6%B1%A0/" target="_self">
+          Netty-内存池
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/netty/5-Netty%E5%BF%83%E8%B7%B3%E4%B8%8E%E6%96%AD%E7%BA%BF%E9%87%8D%E8%BF%9E/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/21/Netty/14-Netty%E5%86%85%E5%AD%98%E6%B1%A0/" target="_self">
+        <div>
+          https://www.cnblogs.com/crazymakercircle/p/16181994.html https://lanchestios.github.io/2021/01/13/Netty-%E5%86%85%E5%AD%98%E6%B1%A0%E4%BC%98%E5%8C%96%E5%8E%9F%E7%90%86/ 这部分主要理解netty内存池概念即可。
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-21 20:56" pubdate>
+              2024-04-21
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Netty/">#Netty</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/20/Netty/13-Java%E5%A0%86%E5%A4%96%E5%86%85%E5%AD%98/" target="_self">
+          Netty-堆外内存
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/20/Netty/13-Java%E5%A0%86%E5%A4%96%E5%86%85%E5%AD%98/" target="_self">
+        <div>
+          1 堆外内存介绍在 Java 中对象都是在堆内分配的，通常我们说的JVM 内存也就指的堆内内存，堆内内存完全被JVM 虚拟机所管理，JVM 有自己的垃圾回收算法，对于使用者来说不必关心对象的内存如何回收。 堆外内存与堆内内存相对应，对于整个机器内存而言，除堆内内存以外部分即为堆外内存，如下图所示。堆外内存不受 JVM 虚拟机管理，直接由操作系统管理。  堆外内存和堆内内存各有利弊，这里我针对其中重
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-20 20:56" pubdate>
+              2024-04-20
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Netty/">#Netty</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/09/Netty/12-Netty%E5%AF%B9%E8%B1%A1%E6%B1%A0/" target="_self">
+          Netty-对象池
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/09/Netty/12-Netty%E5%AF%B9%E8%B1%A1%E6%B1%A0/" target="_self">
+        <div>
+          1 概述1.1 Recycler整体结构池化是我们提升性能的手段之一，比如线程池、内存池以及接下来讲的对象池。池化的作用目的是减少创建和销毁对象的开销，提高并发处理能力，而且利用池化也可以降低 GC 压力。Netty 设计了一个简易的对象池，在 Netty 内存使用广泛，比如对 PooledUnsafeDirectByteBuf 对象进行池化。 Recycler 是 Netty 提供的自定义实现的
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-09 20:56" pubdate>
+              2024-04-09
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Netty/">#Netty</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/08/Netty/11-ByteBuf/" target="_self">
+          Netty-ByteBuf
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/08/Netty/11-ByteBuf/" target="_self">
+        <div>
+          1 简介网络数据的基本单位总是字节，java NIO提供ByteBuffer作为字节的容器，但是ByteBuffer使用起来过于复杂和繁琐。ByteBuf是netty的Server与Client之间通信的数据传输载体(Netty的数据容器)，它提供了一个byte数组(byte[])的抽象视图，既解决了JDK API的局限性，又为网络应用程序的开发者提供了更好的API 1.1 ByteBuffer缺
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-08 20:56" pubdate>
+              2024-04-08
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Netty/">#Netty</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/07/Netty/10-Bytebuffer/" target="_self">
+          Netty-ByteBuffer
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/07/Netty/10-Bytebuffer/" target="_self">
+        <div>
+          1 ByteBuffer介绍在NIO中，最核心的三个组件就是：Channel 通道、ByteBuffer 读写缓冲区、Selector 多路复用器。其中ByteBuffer为NIO中的字节缓冲区，相对于BIO的Stream流只支持写入或者读取单向操作，ByteBuffer是双向的，支持读和写。 2 核心属性 其属性如下：  capacity：ByteBuffer的容量，这个值在ByteBuffer
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-07 20:56" pubdate>
+              2024-04-07
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Netty/">#Netty</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/06/Netty/9-Netty%E4%B8%ADSelector%E4%BC%98%E5%8C%96/" target="_self">
+          Netty-selector优化
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/06/Netty/9-Netty%E4%B8%ADSelector%E4%BC%98%E5%8C%96/" target="_self">
+        <div>
+          1 数据结构优化Netty是基于jdk的NIO进行通信。如下所示，在NIO中，使用的是Set数据结构存储IO事件。当IO就绪，服务器监听到事件后会封装成SelectionKey放到HashSet中, 然后程序就可以从这个HashSet中取出事件进行处理。 12345678910111213141516public abstract class SelectorImpl extends Abstra
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-06 20:56" pubdate>
+              2024-04-06
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Netty/">#Netty</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/05/Netty/8-Netty%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B%E6%80%BB%E7%BB%93/" target="_self">
+          Netty-事件处理流程总结
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/05/Netty/8-Netty%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B%E6%80%BB%E7%BB%93/" target="_self">
+        <div>
+          1 整体流程 结合 Netty 的整体架构，我们一起看下 EventLoop 的事件流转图，以便更好地理解 Netty EventLoop 的设计原理。NioEventLoop 的事件处理机制采用的是无锁串行化的设计思路。  BossEventLoopGroup 和 WorkerEventLoopGroup 包含一个或者多个 NioEventLoop。BossEventLoopGroup 负责监听
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-05 20:56" pubdate>
+              2024-04-05
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Netty/">#Netty</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/05/Netty/7-EventLoop(Group)/" target="_self">
+          Netty-EventLoop
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/05/Netty/7-EventLoop(Group)/" target="_self">
+        <div>
+          1   接口定义1.1   EventLoopGroup接口定义如下文代码所示，从代码种可以看出，EventLoopGroup接口继承自EventExecutorGroup接口，并修改或新增额外功能。由此可知，EventLoopGroup的功能是管理多个EventLoop并接收channel，将其注册到内部的EventLoop中。  next()：返回EventLoopGroup管理中的下一个Ev
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-05 15:56" pubdate>
+              2024-04-05
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Netty/">#Netty</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/04/Netty/6-EventExecutor(Group)/" target="_self">
+          Netty-EventExecutor
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/04/Netty/6-EventExecutor(Group)/" target="_self">
+        <div>
+          1 JDK Executor JDK 的 Executor 体系如上图所示，整体的设计思路为顶级接口-次级接口-抽象类-实现类。其中：  Executor：为顶级接口，内部只有一个 execute()，约定在单个线程或者线程池中执行命令功能。该接口主要是为了解耦组要执行 Runnable 任务与调用者之间的关联。 ExecutorService：该接口继承自 Executor 接口，添加了 shu
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-04 15:56" pubdate>
+              2024-04-04
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Netty/">#Netty</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/04/Netty/5-Netty%E5%BF%83%E8%B7%B3%E4%B8%8E%E6%96%AD%E7%BA%BF%E9%87%8D%E8%BF%9E/" target="_self">
+          Netty-心跳机制
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/04/Netty/5-Netty%E5%BF%83%E8%B7%B3%E4%B8%8E%E6%96%AD%E7%BA%BF%E9%87%8D%E8%BF%9E/" target="_self">
         <div>
           1 TCP 保活机制Netty 是 基于 TCP 协议开发的，在四层协议 TCP 协议的实现中也提供了 keepalive 报文用来探测对端是否可用。TCP 层将在定时时间到后发送相应的 KeepAlive 探针以确定连接可用性。tcp-keepalive，操作系统内核支持，但是不默认开启, 应用需要自行开启，开启之后有三个参数会生效，来决定一个 keepalive 的行为。 123Copynet
         </div>
@@ -240,252 +789,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 23:46" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Netty/">#Netty</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/02/netty/4-Netty%E7%BC%96%E8%A7%A3%E7%A0%81%E5%99%A8%E8%AF%A6%E8%A7%A3/" target="_self">
-          Netty-编解码器
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/netty/4-Netty%E7%BC%96%E8%A7%A3%E7%A0%81%E5%99%A8%E8%AF%A6%E8%A7%A3/" target="_self">
-        <div>
-          1 TCP半包与粘包半包与粘包的本质原因是TCP协议是流式协议，消息无边界，我们必须自己去找边界。当发送方连续发送多个小数据包时，接收方可能会将它们合并成一个大的数据包，这就是粘包问题；而当发送方发送的数据包长度大于接收方的缓冲区长度时，接收方无法完整接收数据包，导致数据的接收不完整，这就是半包问题。 1.1 背景知识1.1.1 TCP滑动窗口机制TCP协议是一种可靠性传输协议，所以在传输数据的时
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 22:46" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Netty/">#Netty</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/02/netty/3-Netty%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B/" target="_self">
-          Netty-使用示例
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/netty/3-Netty%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B/" target="_self">
-        <div>
-          1 Netty客户端代码12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485868788899091929394959697989
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 21:46" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Netty/">#Netty</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/02/netty/2-Java%20IO%E6%A8%A1%E5%9E%8B/" target="_self">
-          Netty-JavaIO模型
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/netty/2-Java%20IO%E6%A8%A1%E5%9E%8B/" target="_self">
-        <div>
-          1 IO模型分类UNIX 系统下， IO 模型一共有 5 种：阻塞 I&#x2F;O、非阻塞 I&#x2F;O、I&#x2F;O 多路复用、信号驱动 I&#x2F;O 和异步 I&#x2F;O。这也是我们经常提到的 5 种 IO 模型。在Java中，目前常用的是阻塞IO、NIO、IO多路复用。 1.1 阻塞IO 应用程序在读取数据时，调用linux的read方法，如果数据未准备好，则阻塞等待数据，
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 20:46" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Netty/">#Netty</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/01/netty/1-Java%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" target="_self">
-          Netty-Java网络编程
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/01/netty/1-Java%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" target="_self">
-        <div>
-          1 网络分层通过网络将数据从一台主机发送到另外的主机，这个过程是通过计算机网络通信来完成。网络通信的不同方面被分解为多个层，层与层之间用接口连接。 1.1 OSI模型OSI模型把网络通信的工作分为7层，分别是物理层、数据链路层、网络层、传输层、会话层、表示层和应用层。OSI参考模型过于庞大，因此后续提出了TCP&#x2F;IP协议栈参考模型，简化了OSI参考模型，由于TCP&#x2F;IP协议栈的
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-01 20:46" pubdate>
-              2024-04-01
+            <time datetime="2024-04-04 10:56" pubdate>
+              2024-04-04
             </time>
           </div>
         
@@ -524,6 +829,12 @@
   </div>
 
 
+
+  <nav aria-label="navigation">
+    <span class="pagination" id="pagination">
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
+    </span>
+  </nav>
 
 
 
