@@ -1,0 +1,668 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Shi Lei">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1 简介网络数据的基本单位总是字节，java NIO提供ByteBuffer作为字节的容器，但是ByteBuffer使用起来过于复杂和繁琐。ByteBuf是netty的Server与Client之间通信的数据传输载体(Netty的数据容器)，它提供了一个byte数组(byte[])的抽象视图，既解决了JDK API的局限性，又为网络应用程序的开发者提供了更好的API 1.1 ByteBuffer缺">
+<meta property="og:type" content="article">
+<meta property="og:title" content="1.4-ByteBuf">
+<meta property="og:url" content="http://example.com/2024/06/01/Netty/1.4-ByteBuf/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="1 简介网络数据的基本单位总是字节，java NIO提供ByteBuffer作为字节的容器，但是ByteBuffer使用起来过于复杂和繁琐。ByteBuf是netty的Server与Client之间通信的数据传输载体(Netty的数据容器)，它提供了一个byte数组(byte[])的抽象视图，既解决了JDK API的局限性，又为网络应用程序的开发者提供了更好的API 1.1 ByteBuffer缺">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/Netty/ByteBuf.png">
+<meta property="og:image" content="http://example.com/images/Netty/ByteBuf-1.png">
+<meta property="article:published_time" content="2024-05-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-07-12T13:30:37.726Z">
+<meta property="article:author" content="Shi Lei">
+<meta property="article:tag" content="Netty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/images/Netty/ByteBuf.png">
+  
+  
+  
+  <title>1.4-ByteBuf - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":30,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ALEI</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="1.4-ByteBuf"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-06-01 00:00" pubdate>
+          2024年6月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          20 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">1.4-ByteBuf</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="1-简介"><a href="#1-简介" class="headerlink" title="1 简介"></a>1 简介</h1><p>网络数据的基本单位总是字节，java NIO提供ByteBuffer作为字节的容器，但是ByteBuffer使用起来过于复杂和繁琐。ByteBuf是netty的Server与Client之间通信的数据传输载体(Netty的数据容器)，它提供了一个byte数组(byte[])的抽象视图，既解决了JDK API的局限性，又为网络应用程序的开发者提供了更好的API</p>
+<h2 id="1-1-ByteBuffer缺点"><a href="#1-1-ByteBuffer缺点" class="headerlink" title="1.1 ByteBuffer缺点"></a>1.1 ByteBuffer缺点</h2><ol>
+<li>ByteBuffer长度固定，一旦分配完成，它的容量不能动态扩展和收缩，当需要编码的POJO对象大于ByteBuffer的容量时，会发生索引越界异常；</li>
+<li>ByteBuffer只有一个标识位置的指针position，读写的时候需要手工调用flip()和rewind()等，使用者必须小心谨慎地处理这些API，否则很容易导致程序处理失败；</li>
+<li>ByteBuffer的API功能有限，一些高级和实用的特性它不支持，需要使用者自己编程实现。</li>
+</ol>
+<h2 id="1-2-ByteBuf优点"><a href="#1-2-ByteBuf优点" class="headerlink" title="1.2 ByteBuf优点"></a>1.2 ByteBuf优点</h2><ol>
+<li>容量可以按需增长</li>
+<li>读写采用了不同的指针，读写模式可以随意切换，不需要调用 flip 方法；</li>
+<li>支持方法的链式调用</li>
+<li>支持引用计数</li>
+<li>支持池化</li>
+<li>可以被用户自定义的缓冲区类型扩展</li>
+<li>通过内置的复合缓冲区类型实现透明的零拷贝</li>
+</ol>
+<h1 id="2-工作机制"><a href="#2-工作机制" class="headerlink" title="2 工作机制"></a>2 工作机制</h1><h2 id="2-1-工作机制介绍"><a href="#2-1-工作机制介绍" class="headerlink" title="2.1 工作机制介绍"></a>2.1 工作机制介绍</h2><p>​<img src="/../../images/Netty/ByteBuf.png" srcset="/img/loading.gif" lazyload>​</p>
+<ol>
+<li>ByteBuf工作机制：ByteBuf维护了两个不同的索引，一个用于读取，一个用于写入。<code>readerIndex</code>和<code>writerIndex</code>的初始值都是0，当从ByteBuf中读取数据时，它的<code>readerIndex</code>将会被递增(它不会超过writerIndex)，当向ByteBuf写入数据时，它的writerIndex会递增。</li>
+<li>名称以<code>readXXX</code>或者<code>writeXXX</code>开头的ByteBuf方法，会推进对应的索引，而以<code>setXXX</code>或<code>getXXX</code>开头的操作不会。</li>
+<li>在读取之后，0～readerIndex的就被视为discard的，调用<code>discardReadBytes()</code>，可以释放这部分空间，它的作用类似ByteBuffer的<code>compact()</code>方法。</li>
+<li>readerIndex和writerIndex之间的数据是可读取的，等价于ByteBuffer的position和limit之间的数据。writerIndex和capacity之间的空间是可写的，等价于ByteBuffer的limit和capacity之间的可用空间。</li>
+</ol>
+<h2 id="2-2-索引变化流程"><a href="#2-2-索引变化流程" class="headerlink" title="2.2 索引变化流程"></a>2.2 索引变化流程</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 初始化分配</span><br>    +-------------------------------+<br>    |       writable bytes          |<br>    +-------------------------------+<br>    |                               |<br>    <span class="hljs-number">0</span>=readerIndex=writerIndex       capacity<br><br> <span class="hljs-comment">// 写入N个字节</span><br>    +------------------+-------------------+<br>    |  readable bytes  |    writable bytes |<br>    +------------------+-------------------+<br>    |                  |                   |<br>    <span class="hljs-number">0</span>=readerIndex      N=writerIndex       capacity<br><br> <span class="hljs-comment">// 读取M（＜N）个字节之后</span><br>    +-------------------+------------------+------------------+<br>    | discardable bytes |  readable bytes  |  writable bytes  |<br>    +-------------------+------------------+------------------+<br>    |                   |                  |                  |<br>    <span class="hljs-number">0</span>               M=readerIndex    N=writerIndex       capacity<br><br><span class="hljs-comment">// 调用discardReadBytes操作之后</span><br>    +------------------+----------------------+<br>    |  readable bytes  |    writable bytes    |<br>    +------------------+----------------------+<br>    |                  |                      |<br>    <span class="hljs-number">0</span>=readerIndex   N-M=writerIndex         capacity<br><br><span class="hljs-comment">// 调用clear操作之后</span><br>    +-------------------------------+<br>    |       writable bytes          |<br>    +-------------------------------+<br>    |                               |<br>    <span class="hljs-number">0</span>=readerIndex=writerIndex       capacity<br></code></pre></td></tr></table></figure>
+
+<h2 id="2-3-引用计数"><a href="#2-3-引用计数" class="headerlink" title="2.3 引用计数"></a>2.3 引用计数</h2><p>ByteBuf 是基于引用计数设计的，它实现了 ReferenceCounted 接口，ByteBuf 的生命周期是由引用计数所管理。只要引用计数大于 0，表示 ByteBuf 还在被使用；当 ByteBuf 不再被其他对象所引用时，引用计数为 0，那么代表该对象可以被释放。</p>
+<p>当新创建一个 ByteBuf 对象时，它的初始引用计数为 1，当 ByteBuf 调用 release() 后，引用计数减 1，所以不要误以为调用了 release() 就会保证 ByteBuf 对象一定会被回收。你可以结合以下的代码示例做验证：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-type">ByteBuf</span> <span class="hljs-variable">buffer</span> <span class="hljs-operator">=</span> ctx.alloc().directbuffer();<br><span class="hljs-keyword">assert</span> buffer.refCnt() == <span class="hljs-number">1</span>;<br>buffer.release();<br><span class="hljs-keyword">assert</span> buffer.refCnt() == <span class="hljs-number">0</span>;<br></code></pre></td></tr></table></figure>
+
+<p>引用计数对于 Netty 设计缓存池化有非常大的帮助，当引用计数为 0，该 ByteBuf 可以被放入到对象池中，避免每次使用 ByteBuf 都重复创建，对于实现高性能的内存管理有着很大的意义。</p>
+<p>此外 Netty 可以利用引用计数的特点实现内存泄漏检测工具。JVM 并不知道 Netty 的引用计数是如何实现的，当 ByteBuf 对象不可达时，一样会被 GC 回收掉，但是如果此时 ByteBuf 的引用计数不为 0，那么该对象就不会释放或者被放入对象池，从而发生了内存泄漏。Netty 会对分配的 ByteBuf 进行抽样分析，检测 ByteBuf 是否已经不可达且引用计数大于 0，判定内存泄漏的位置并输出到日志中，你需要关注日志中 LEAK 关键字。</p>
+<h1 id="3-ByteBuf分类"><a href="#3-ByteBuf分类" class="headerlink" title="3 ByteBuf分类"></a>3 ByteBuf分类</h1><p><img src="/../../images/Netty/ByteBuf-1.png" srcset="/img/loading.gif" lazyload>​<br>从分配位置来看，可将ByteBuf分为两类：</p>
+<ol>
+<li>堆内存（HeapByteBuf）字节缓冲区：特点是内存的分配和回收速度快，可以被JVM自动回收；缺点就是如果进行Socket的I&#x2F;O读写，需要额外做一次内存复制，将堆内存对应的缓冲区复制到堆外，性能会有一定程度的下降。</li>
+<li>直接内存(DirectByteBuf)字节缓冲区：非堆内存，它在堆外进行内存分配，相比于堆内存，它的分配和回收速度会慢一些，但是将它写入或者从Socket Channel中读取时，由于少了一次内存复制，速度比堆内存快。</li>
+</ol>
+<p>从内存回收角度看，ByteBuf也分为两类：</p>
+<ol>
+<li>基于对象池的ByteBuf：将ByteBuf进行池化重用，降低gc频率。</li>
+<li>普通的ByteBuf：普通的ByteBuf，使用后需要回收内存。</li>
+</ol>
+<p>综上，根据不同的组合形式，ByteBuf共有四类：</p>
+<ol>
+<li>池化堆内ByteBuf</li>
+<li>池化非堆ByteBuf</li>
+<li>非池化堆内ByteBuf</li>
+<li>非池化非堆ByteBuf</li>
+</ol>
+<p>此外，还有<strong>Unsafe&#x2F;非 Unsafe</strong>不同的操作方式，其中Unsafe 表示每次调用 JDK 的 Unsafe 对象操作物理内存，依赖 offset + index 的方式操作数据。非 Unsafe 则不需要依赖 JDK 的 Unsafe 对象，直接通过数组下标的方式操作数据。</p>
+<h1 id="4-ByteBuf的默认类型"><a href="#4-ByteBuf的默认类型" class="headerlink" title="4 ByteBuf的默认类型"></a>4 ByteBuf的默认类型</h1><p>从上可知，在ByteBuf分为四类。在使用时，如果不指定具体类型，则使用<code>ByteBufAllocator.DEFAULT</code>进行分配ByteBuf。在<code>ByteBufAllocator.DEFAULT</code>初始化过程如下文代码所示，从代码中可知：</p>
+<ol>
+<li>在初始化时，如果指定了<code>io.netty.allocator.type</code>参数，则使用对应的参数值。</li>
+<li>如果未指定上述参数，则根据netty运行平台决定，如果运行在非安卓平台则以池化ByteBuf作为默认的ByteBuf类型。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">static</span> &#123;<br>	<span class="hljs-type">String</span> <span class="hljs-variable">allocType</span> <span class="hljs-operator">=</span> SystemPropertyUtil.get(<br>			<span class="hljs-string">&quot;io.netty.allocator.type&quot;</span>, PlatformDependent.isAndroid() ? <span class="hljs-string">&quot;unpooled&quot;</span> : <span class="hljs-string">&quot;pooled&quot;</span>);<br>	allocType = allocType.toLowerCase(Locale.US).trim();<br><br>	ByteBufAllocator alloc;<br>	<span class="hljs-keyword">if</span> (<span class="hljs-string">&quot;unpooled&quot;</span>.equals(allocType)) &#123;<br>		alloc = UnpooledByteBufAllocator.DEFAULT;<br>		logger.debug(<span class="hljs-string">&quot;-Dio.netty.allocator.type: &#123;&#125;&quot;</span>, allocType);<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-string">&quot;pooled&quot;</span>.equals(allocType)) &#123;<br>		alloc = PooledByteBufAllocator.DEFAULT;<br>		logger.debug(<span class="hljs-string">&quot;-Dio.netty.allocator.type: &#123;&#125;&quot;</span>, allocType);<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		alloc = PooledByteBufAllocator.DEFAULT;<br>		logger.debug(<span class="hljs-string">&quot;-Dio.netty.allocator.type: pooled (unknown: &#123;&#125;)&quot;</span>, allocType);<br>	&#125;<br><br>	DEFAULT_ALLOCATOR = alloc;<br><br>	THREAD_LOCAL_BUFFER_SIZE = SystemPropertyUtil.getInt(<span class="hljs-string">&quot;io.netty.threadLocalDirectBufferSize&quot;</span>, <span class="hljs-number">0</span>);<br>	logger.debug(<span class="hljs-string">&quot;-Dio.netty.threadLocalDirectBufferSize: &#123;&#125;&quot;</span>, THREAD_LOCAL_BUFFER_SIZE);<br><br>	MAX_CHAR_BUFFER_SIZE = SystemPropertyUtil.getInt(<span class="hljs-string">&quot;io.netty.maxThreadLocalCharBufferSize&quot;</span>, <span class="hljs-number">16</span> * <span class="hljs-number">1024</span>);<br>	logger.debug(<span class="hljs-string">&quot;-Dio.netty.maxThreadLocalCharBufferSize: &#123;&#125;&quot;</span>, MAX_CHAR_BUFFER_SIZE);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>从上述代码中可知，<code>PooledByteBufAllocator.DEFAULT</code>为默认的alloc，其创建细节如下，由<code>PlatformDependent.directBufferPreferred()</code>决定是否使用堆外内存还是堆内内存。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">PooledByteBufAllocator</span> <span class="hljs-variable">DEFAULT</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">PooledByteBufAllocator</span>(PlatformDependent.directBufferPreferred());<br></code></pre></td></tr></table></figure>
+
+<p>进一步跟踪<code>PlatformDependent.directBufferPreferred()</code>代码可知，当有回收堆外内存工具（jdk7+）且未明确指定使用堆内内存时，默认使用堆外内存。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// We should always prefer direct buffers by default if we can use a Cleaner to release direct buffers.</span><br>DIRECT_BUFFER_PREFERRED = CLEANER != NOOP<br>    &amp;&amp; !SystemPropertyUtil.getBoolean(<span class="hljs-string">&quot;io.netty.noPreferDirect&quot;</span>, <span class="hljs-literal">false</span>);<br><span class="hljs-keyword">if</span> (logger.isDebugEnabled()) &#123;<br>    logger.debug(<span class="hljs-string">&quot;-Dio.netty.noPreferDirect: &#123;&#125;&quot;</span>, !DIRECT_BUFFER_PREFERRED);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>综上，默认情况下，netty默认的Bytebuf为堆外池化Bytebuf：</p>
+<ul>
+<li>通过池化Bytebuf可减少内存回收的次数，提高效率。</li>
+<li>通过使用堆外内存，降低字节在内存中复制的次数，提高性能。</li>
+</ul>
+<p>‍</p>
+<h1 id="5-ByteBuf的释放"><a href="#5-ByteBuf的释放" class="headerlink" title="5 ByteBuf的释放"></a>5 ByteBuf的释放</h1><p>在Netty里，因为Handler链的存在，ByteBuf经常要传递到下一个Hanlder去而不复还，所以规则变成了谁是最后使用者，谁负责释放。另外，更要注意的是各种异常情况，ByteBuf没有成功传递到下一个Hanlder，还在自己地界里的话，一定要进行释放。根据<strong>谁最后使用谁负责释放</strong>原则，每个Handler对消息可能有三种场景</p>
+<ul>
+<li>对原消息不做处理，调用<code>ctx.fireChannelRead(msg)</code>把原消息往下传，那不用做什么释放。</li>
+<li>将原消息转化为新的消息并调用<code>ctx.fireChannelRead(newMsg)</code>往下传，那必须把原消息release掉。</li>
+<li>如果已经不再调用<code>ctx.fireChannelRead(msg)</code>传递任何消息，那更要把原消息release掉。</li>
+</ul>
+<h2 id="5-1-场景一"><a href="#5-1-场景一" class="headerlink" title="5.1 场景一"></a>5.1 场景一</h2><p>对原消息不做处理是指相关操作不影响原始的bytebuf，如只拷贝出字节等，这样的话，只需要对消息往后传输。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> io.netty.buffer.ByteBufUtil.getBytes(buf)<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">ConnectHandler</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">ChannelInboundHandlerAdapter</span><br>  <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">channelRead</span><span class="hljs-params">(ChannelHandlerContext ctx, Object msg)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-type">ByteBuf</span> <span class="hljs-variable">buf</span> <span class="hljs-operator">=</span> (ByteBuf) msg;<br>        <span class="hljs-comment">//拷贝操作</span><br>        <span class="hljs-type">byte</span>[] bytes = ByteBufUtil.getBytes(buf);<br>        <span class="hljs-type">String</span> <span class="hljs-variable">value</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">String</span>(bytes, <span class="hljs-string">&quot;UTF-8&quot;</span>);<br>        <span class="hljs-keyword">if</span> (<span class="hljs-string">&quot;connect&quot;</span>.equals(value)) &#123;<br>            doSomething();<br>            ReferenceCountUtil.release(msg)<br>        &#125;<span class="hljs-keyword">else</span>&#123;<br>            ctx.fireChannelRead(msg);<br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="5-2-场景二"><a href="#5-2-场景二" class="headerlink" title="5.2 场景二"></a>5.2 场景二</h2><p>将原消息转化为新的消息，并传递新消息，一般是指我们使用了原消息，然后传递新的消息给下一个处理器，那么不会再有任何地方会继续使用原来的消息，那么需要释放原消息。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> io.netty.buffer.ByteBufUtil.getBytes(buf)<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">ConnectHandler</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">ChannelInboundHandlerAdapter</span><br>  <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">channelRead</span><span class="hljs-params">(ChannelHandlerContext ctx, Object msg)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-type">ByteBuf</span> <span class="hljs-variable">buf</span> <span class="hljs-operator">=</span> (ByteBuf) msg;<br>        <span class="hljs-type">ByteBuf</span> <span class="hljs-variable">newBuf</span> <span class="hljs-operator">=</span> buf .alloc().directBuffer(buf .readableBytes() + <span class="hljs-number">1</span>);<br>            newBuf .writeBytes(input);<br>            newBuf .writeByte(<span class="hljs-number">42</span>);    <br>            <span class="hljs-comment">//释放原消息  </span><br>            ReferenceCountUtil.release(buf )<br>            <span class="hljs-comment">//传递新的消息至下一个处理器</span><br>            ctx.fireChannelRead(newBuf );<br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="5-3-场景三"><a href="#5-3-场景三" class="headerlink" title="5.3 场景三"></a>5.3 场景三</h2><p>不再传递任何消息，这个场景很简单，就是流程到此结束，一切都over了，那么就关闭原消息。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">channelRead</span><span class="hljs-params">(ChannelHandlerContext ctx, Object msg)</span> &#123;  <br>    <span class="hljs-type">ByteBuf</span> <span class="hljs-variable">buf</span> <span class="hljs-operator">=</span> (ByteBuf) msg;  <br>    <span class="hljs-keyword">try</span> &#123;  <br>        ...  <br>    &#125; <span class="hljs-keyword">finally</span> &#123;  <br>        buf.release();  <br>    &#125;  <br>&#125;  <br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>还有一些特殊的使用方式，如在ds中，bytebuf并未传输到自定义handle中，而是在解码器中就将bytebuf解析成java obj，并且解码器使用的是ReplayingDecoder解码器，所以就不用手动的释放资源了。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Netty/" class="print-no-link">#Netty</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/06/02/Netty/2.5-Netty%E7%BC%96%E8%A7%A3%E7%A0%81%E5%99%A8%E8%AF%A6%E8%A7%A3/" title="2.5-Netty编解码器详解">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">2.5-Netty编解码器详解</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/06/01/Netty/1.1-Java%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" title="1.1-Java网络编程">
+                        <span class="hidden-mobile">1.1-Java网络编程</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

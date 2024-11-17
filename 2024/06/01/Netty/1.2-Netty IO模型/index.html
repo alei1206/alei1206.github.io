@@ -1,0 +1,754 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Shi Lei">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1 IO 模型分类I&#x2F;O 请求可以分为两个阶段，分别为调用阶段和执行阶段。  第一个阶段为I&#x2F;O 调用阶段，即用户进程向内核发起系统调用。 第二个阶段为I&#x2F;O 执行阶段。此时，内核等待 I&#x2F;O 请求处理完成返回。该阶段分为两个过程：首先等待数据就绪，并写入内核缓冲区；随后将内核缓冲区数据拷贝至用户态缓冲区。  ​​ UNIX 系统下， IO 模型一共有 5">
+<meta property="og:type" content="article">
+<meta property="og:title" content="1.2-Netty IO模型">
+<meta property="og:url" content="http://example.com/2024/06/01/Netty/1.2-Netty%20IO%E6%A8%A1%E5%9E%8B/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="1 IO 模型分类I&#x2F;O 请求可以分为两个阶段，分别为调用阶段和执行阶段。  第一个阶段为I&#x2F;O 调用阶段，即用户进程向内核发起系统调用。 第二个阶段为I&#x2F;O 执行阶段。此时，内核等待 I&#x2F;O 请求处理完成返回。该阶段分为两个过程：首先等待数据就绪，并写入内核缓冲区；随后将内核缓冲区数据拷贝至用户态缓冲区。  ​​ UNIX 系统下， IO 模型一共有 5">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B.png">
+<meta property="og:image" content="http://example.com/images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-1.png">
+<meta property="og:image" content="http://example.com/images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-2.png">
+<meta property="og:image" content="http://example.com/images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-3.png">
+<meta property="og:image" content="http://example.com/images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-4.png">
+<meta property="og:image" content="http://example.com/images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-5.png">
+<meta property="og:image" content="http://example.com/images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-6.png">
+<meta property="article:published_time" content="2024-05-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-07-12T13:30:37.699Z">
+<meta property="article:author" content="Shi Lei">
+<meta property="article:tag" content="Netty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B.png">
+  
+  
+  
+  <title>1.2-Netty IO模型 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":30,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ALEI</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="1.2-Netty IO模型"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-06-01 00:00" pubdate>
+          2024年6月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          38 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">1.2-Netty IO模型</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="1-IO-模型分类"><a href="#1-IO-模型分类" class="headerlink" title="1 IO 模型分类"></a>1 IO 模型分类</h1><p>I&#x2F;O 请求可以分为两个阶段，分别为调用阶段和执行阶段。</p>
+<ul>
+<li>第一个阶段为<strong>I&#x2F;O 调用阶段</strong>，即用户进程向内核发起系统调用。</li>
+<li>第二个阶段为<strong>I&#x2F;O 执行阶段</strong>。此时，内核等待 I&#x2F;O 请求处理完成返回。该阶段分为两个过程：首先等待数据就绪，并写入内核缓冲区；随后将内核缓冲区数据拷贝至用户态缓冲区。</li>
+</ul>
+<p>​<img src="/../../images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B.png" srcset="/img/loading.gif" lazyload>​</p>
+<p>UNIX 系统下， IO 模型一共有 5 种：<strong>阻塞 I&#x2F;O</strong>、<strong>非阻塞 I&#x2F;O</strong>、<strong>I&#x2F;O 多路复用</strong>、<strong>信号驱动 I&#x2F;O</strong> 和<strong>异步 I&#x2F;O</strong>。这也是我们经常提到的 5 种 IO 模型。在 Java 中，目前常用的是阻塞 IO、NIO、IO 多路复用。</p>
+<p>&#x3D;&#x3D;阻塞与非阻塞&#x3D;&#x3D;</p>
+<p>阻塞与非阻塞的区别是在读写数据没完成前，是否返回。如：</p>
+<ul>
+<li>读数据时，数据未准备完成，阻塞式IO读操作会阻塞等待数据，而非阻塞式会直接返回。</li>
+<li>写数据时，缓冲区满了，阻塞式IO写操作会阻塞，而非阻塞式会直接返回。</li>
+</ul>
+<p>&#x3D;&#x3D;同步与异步&#x3D;&#x3D;</p>
+<p>同步与异步的区别是数据就绪后，谁来操作问题：</p>
+<ul>
+<li>同步是指数据就绪后，自己去读，将数据读取到用户缓冲区。</li>
+<li>异步是指数据就绪后，系统会将数据放到对应的用户缓冲区，然后通知程序。</li>
+</ul>
+<h2 id="1-1-同步阻塞-IO（BIO）"><a href="#1-1-同步阻塞-IO（BIO）" class="headerlink" title="1.1 同步阻塞 IO（BIO）"></a>1.1 同步阻塞 IO（BIO）</h2><p>​<img src="/../../images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-1.png" srcset="/img/loading.gif" lazyload>​</p>
+<p>如上图所表现的那样，应用进程向内核发起 I&#x2F;O 请求，发起调用的线程一直等待内核返回结果。一次完整的 I&#x2F;O 请求称为BIO（Blocking IO，阻塞 I&#x2F;O），所以 BIO 在实现异步操作时，<strong>只能使用多线程模型</strong>，一个请求对应一个线程。但是，线程的资源是有限且宝贵的，创建过多的线程会增加线程切换的开销。<br><strong>优点</strong>：模型比较简单，在线程阻塞时，消耗 cpu 较少。<br><strong>缺点</strong>：高并发时容易耗尽线程资源, 且大量线程会引起线程切换的巨大开销, 造成响应不及时。</p>
+<p>类比：类比于吃饭排队打饭，需要等待。</p>
+<h2 id="1-2-同步非阻塞式-IO（NIO）"><a href="#1-2-同步非阻塞式-IO（NIO）" class="headerlink" title="1.2 同步非阻塞式 IO（NIO）"></a>1.2 同步非阻塞式 IO（NIO）</h2><p>​<img src="/../../images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-2.png" srcset="/img/loading.gif" lazyload>​</p>
+<p>如上图所示，应用进程向内核发起 I&#x2F;O 请求后不再会同步等待结果，而是会立即返回，通过轮询的方式获取请求结果。NIO 相比 BIO 虽然大幅提升了性能，但是轮询过程中大量的系统调用导致上下文切换开销很大。所以，单独使用非阻塞 I&#x2F;O 时效率并不高，而且随着并发量的提升，非阻塞 I&#x2F;O 会存在严重的性能浪费。</p>
+<ul>
+<li>优点: 把应用线程的 read 调用, 分割出了第一步和第二步, 应用线程可以做更多实时的控制。</li>
+<li>缺点: 第一步中的轮询, 大量占用 CPU 时间, 降低系统资源利用率, 所以一般 web 服务器也不使用这样的 NIO。</li>
+</ul>
+<h2 id="1-3-IO-多路复用"><a href="#1-3-IO-多路复用" class="headerlink" title="1.3 IO 多路复用"></a>1.3 IO 多路复用</h2><p>IO 多路复用，是一种同步 IO 模型，由操作系统提供相关的能力，当线程监听的多个 IO 文件描述符中有部分 IO 数据就绪后，操作系统就会通知对应的线程进行读取数据。线程在读取数据的过程中，是同步阻塞读取的。如果没有 IO 就绪，则应用线程阻塞。如下图：</p>
+<ol>
+<li><p>应用线程调用 Linux 提供的相关方法，注册监听 IO。</p>
+</li>
+<li><p>当 IO 数据就绪后，Linux 通知对应的线程。</p>
+<p> 用户线程阻塞式的调用 Linux 的 read 方法，读取 IO 数据。<br> ​<img src="/../../images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-3.png" srcset="/img/loading.gif" lazyload>​</p>
+</li>
+</ol>
+<blockquote>
+<p>I&#x2F;O 多路复用就是通过一种机制，一个进程可以监视多个描述符，一旦某个描述符就绪（一般是读就绪或者写就绪），能够通知程序进行相应的读写操作。但 select，poll，epoll 本质上都是同步 I&#x2F;O，因为他们都需要在读写事件就绪后自己负责进行读写，也就是说这个读写过程是阻塞的，而异步 I&#x2F;O 则无需自己负责进行读写，异步 I&#x2F;O 的实现会负责把数据从内核拷贝到用户空间</p>
+</blockquote>
+<h2 id="1-4-信号驱动IO"><a href="#1-4-信号驱动IO" class="headerlink" title="1.4 信号驱动IO"></a>1.4 信号驱动IO</h2><p>​<img src="/../../images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-4.png" srcset="/img/loading.gif" lazyload>​</p>
+<p>信号驱动 I&#x2F;O 并不常用，它是一种半异步的 I&#x2F;O 模型。在使用信号驱动 I&#x2F;O 时，当数据准备就绪后，内核通过发送一个 SIGIO 信号通知应用进程，应用进程就可以开始读取数据了。</p>
+<h2 id="1-5-异步IO（AIO）"><a href="#1-5-异步IO（AIO）" class="headerlink" title="1.5 异步IO（AIO）"></a>1.5 异步IO（AIO）</h2><p>​<img src="/../../images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-5.png" srcset="/img/loading.gif" lazyload>​</p>
+<p>异步 I&#x2F;O 最重要的一点是从内核缓冲区拷贝数据到用户态缓冲区的过程也是由系统异步完成，应用进程只需要在指定的数组中引用数据即可。<strong>异步 I&#x2F;O 与信号驱动 I&#x2F;O 这种半异步模式的主要区别</strong>：信号驱动 I&#x2F;O 由内核通知何时可以开始一个 I&#x2F;O 操作，而异步 I&#x2F;O 由内核通知 I&#x2F;O 操作何时已经完成。</p>
+<p>在Linux中，AIO的方式发展还未成熟，相比于NIO来说，性能提升较小。</p>
+<p>类比：比如吃饭点餐的包厢模式，服务员会将餐送至包厢</p>
+<h1 id="2-select-poll-epoll"><a href="#2-select-poll-epoll" class="headerlink" title="2 select&#x2F;poll&#x2F;epoll"></a>2 select&#x2F;poll&#x2F;epoll</h1><p>前文中 IO 多路复用，用户线程需要使用 Linux 系统提供的能力，来注册此线程监听的 IO，当对应的 IO 数据就绪后，Linux 通知对应的线程。此种能力即 select&#x2F;poll&#x2F;epoll 方法。</p>
+<p>在netty中，linux平台下一般推荐使用Epoll实现，因为Netty任务在Linux平台下，Epoll实现性能更好。具体可表现为：</p>
+<ol>
+<li>JDK NIO是默认水平触发，而netty实现是默认边缘触发，并且可与水平触发切换。</li>
+<li>netty实现垃圾回收更少。</li>
+</ol>
+<h2 id="2-1-select"><a href="#2-1-select" class="headerlink" title="2.1 select"></a>2.1 select</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">select</span> <span class="hljs-params">(<span class="hljs-type">int</span> n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, <span class="hljs-keyword">struct</span> timeval *timeout)</span>;<br></code></pre></td></tr></table></figure>
+
+<p><strong>函数参数</strong>：</p>
+<ul>
+<li><p>Readfds：内核检测该集合中的 IO 是否可读。如果想让内核帮忙检测某个 IO 是否可读，需要手动把文件描述符加入该集合。</p>
+</li>
+<li><p>Writefds：内核检测该集合中的 IO 是否可写。同 readfds，需要手动把文件描述符加入该集合。</p>
+</li>
+<li><p>Exceptfds：内核检测该集合中的 IO 是否异常。同 readfds，需要手动把文件描述符加入该集合。</p>
+</li>
+<li><p>Nfds：以上三个集合中最大的文件描述符数值 + 1，例如集合是{0,1,5,10}，那么 maxfd 就是 11</p>
+</li>
+<li><p>Timeout：用户线程调用 select 的超时时长。</p>
+<ul>
+<li>设置成 NULL，表示如果没有 I&#x2F;O 事件发生，则 select 一直等待下去。</li>
+<li>设置为非0的值，这个表示等待固定的一段时间后从 select 阻塞调用中返回。</li>
+<li>设置成 0，表示根本不等待，检测完毕立即返回。</li>
+</ul>
+</li>
+</ul>
+<p><strong>函数返回值</strong>：</p>
+<ul>
+<li>大于0：成功，返回集合中已就绪的 IO 总个数</li>
+<li>等于-1：调用失败</li>
+<li>等于0：没有就绪的 IO</li>
+</ul>
+<p><strong>执行逻辑</strong>：</p>
+<p>Select 函数是操作系统提供的，监视 IO 的相关方法。Select 函数监视的文件描述符分3类，分别是 writefds、readfds、和 exceptfds</p>
+<ol>
+<li><p>当用户 process 调用 select 的时候，select 会将需要监控的 readfds 集合拷贝到内核空间</p>
+</li>
+<li><p>内核会遍历用户传来的 IO 集合，检查是否有 IO 事件：</p>
+<ol>
+<li>如果无 IO 事件就绪，则阻塞用户线程。</li>
+<li>如果有 IO 事件就绪，则返回就绪事件的个数，并唤醒用户线程。</li>
+<li>用户线程被唤醒后，遍历检查所有的 IO 事件，然后针对就绪的 IO 进行阻塞处理。</li>
+</ol>
+</li>
+</ol>
+<p><strong>存在问题</strong>：</p>
+<ol>
+<li>每次调用 select，都需要把被监控的 fds 集合从用户态空间拷贝到内核态空间，高并发场景下这样的拷贝会使得消耗的资源是很大的。</li>
+<li>能监听端口的数量有限，单个进程所能打开的最大连接数由 FD_SETSIZE 宏定义，监听上限就等于 fds_bits 位数组中所有元素的二进制位总数，其大小是32个整数的大小（在32位的机器上，大小就是3232，同理64位机器上为3264）</li>
+<li>由于 select 函数返回的结果是 io 就绪个数，所以用户线程需要在被唤醒后，再次遍历所有 io，检查是否就绪，性能较差。</li>
+</ol>
+<h2 id="2-2-poll"><a href="#2-2-poll" class="headerlink" title="2.2 poll"></a>2.2 poll</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java">struct pollfd &#123;<br>　　 <span class="hljs-type">int</span> fd;           <span class="hljs-comment">/*文件描述符*/</span><br>　　 <span class="hljs-type">short</span> events;     <span class="hljs-comment">/*监控的事件*/</span><br>　　 <span class="hljs-type">short</span> revents;    <span class="hljs-comment">/*监控事件中满足条件返回的事件*/</span><br>&#125;;<br><span class="hljs-type">int</span> <span class="hljs-title function_">poll</span><span class="hljs-params">(struct pollfd *fds, unsigned <span class="hljs-type">long</span> nfds, <span class="hljs-type">int</span> timeout)</span>;   <br></code></pre></td></tr></table></figure>
+
+<p><strong>函数参数</strong>：</p>
+<ul>
+<li>Fds：struct pollfd 类型的数组, 存储了待检测的文件描述符，struct pollfd 有三个成员：</li>
+<li>Fd：委托内核检测的文件描述符</li>
+<li>Events：委托内核检测的 fd 事件（输入、输出、错误），每一个事件有多个取值</li>
+<li>Revents：这是一个传出参数，数据由内核写入，存储内核检测之后的结果</li>
+<li>Nfds：描述的是数组 fds 的大小</li>
+<li>Timeout: 指定 poll 函数的阻塞时长<ul>
+<li>一直阻塞，直到检测的集合中有就绪的 IO 事件，然后解除阻塞函数返回</li>
+<li>不阻塞，不管检测集合中有没有已就绪的 IO 事件，函数马上返回</li>
+<li>大于0：表示 poll 调用方等待指定的毫秒数后返回</li>
+</ul>
+</li>
+</ul>
+<p><strong>函数返回值</strong>：</p>
+<ul>
+<li>-1：失败</li>
+<li>大于0：表示检测的集合中已就绪的文件描述符的总个数</li>
+</ul>
+<p><strong>执行逻辑</strong>：</p>
+<p>Poll 的整体逻辑与 select 类似，区别就是函数参数中 fds 集合的形式变化了，使用了 struct pollfd 类型的数组，而不是 select 的 fd_set 结构，使得 poll 支持的 fds 集合限制远大于 select 的1024。</p>
+<p><strong>存在问题</strong>：</p>
+<ul>
+<li>Poll 解决了 select 的 fds 集合大小限制文件，但是从实现来看，依旧存在大量描述符数组被整体复制于用户态和内核态的地址空间之间，以及个别描述符就绪触发整体描述符集合的遍历的低效问题。在大量 IO 并发的场景下，poll 的性能会随着 IO 数量的增多而降低。</li>
+</ul>
+<h2 id="2-3-epoll"><a href="#2-3-epoll" class="headerlink" title="2.3 epoll"></a>2.3 epoll</h2><h3 id="2-3-1-概念"><a href="#2-3-1-概念" class="headerlink" title="2.3.1 概念"></a>2.3.1 概念</h3><p>Epoll 接口是为解决 Linux 内核处理大量文件描述符而提出的方案。该接口属于 Linux 下多路 I&#x2F;O 复用接口中 select&#x2F;poll 的增强。Epoll 在 Linux 内核中构建了一个文件系统（eventpoll），采用红黑树的形式，组织文件描述符。当有网络连接增加或删除时，通过修改红黑树中文件描述符来修改对 io 的监听。其基本结构如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// file：fs/eventpoll.c</span><br>struct eventpoll &#123; 	<br>    <span class="hljs-comment">//sys_epoll_wait用到的等待队列</span><br>    wait_queue_head_t wq;<br>    <span class="hljs-comment">//接收就绪的描述符都会放到这里</span><br>    struct list_head rdllist;<br>    <span class="hljs-comment">//每个epoll对象中都有一颗红黑树</span><br>    struct rb_root rbr;<br>    ......<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>当 io 就绪后，需要唤醒对应的用户线程来处理 io 数据，因此在 eventpoll 中就存在 wq 队列，用户存储用户线程，方便后续 io 就绪后唤醒对应的线程<br>Select&#x2F;poll 效率较低的原因就是在 io 就绪后，线程无法知道具体哪个 socket io 就绪，需要遍历寻找就绪的 io。Epoll 为解决此问题，在 eventpoll 中引入一个就绪队列 rdlist，当 scoket 就绪后，会将此 io 事件放到 rdlist 中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java">epol_create()<br>epoll_ctl()<br>epoll_wait()<br></code></pre></td></tr></table></figure>
+
+<p>Epoll 接口提供以上三个函数，其中：</p>
+<ol>
+<li><code>epol_create()</code> 函数提供创建 epoll 文件系统功能，即在 linux 内核中初始化创建一个红黑树，用户存储文件描述符。</li>
+<li><code>epoll_ctl()</code> 函数提供对红黑树的增删功能，即当有连接断开等事情发生时，需要操作 epoll 文件系统改变监听的文件描述符。</li>
+<li><code>epoll_wait()</code> 函数提供返回就绪 io 事件功能，如果 eventpoll 中 rdlist 已经引用了 socket，那么 epoll_wait 直接返回就绪 io 数量，如果 rdlist 为空，阻塞进程。<br>综上，整体逻辑如下：</li>
+<li>用户使用 <code>epol_create()</code> 函数，在 linux 内核中创建 eventpoll。</li>
+<li>用户使用 <code>epoll_ctl()</code> 函数在 eventpoll 中新增或删除相关的 io 文件描述符。</li>
+<li>用户线程使用 <code>epoll_wait()</code> 函数，等待返回就绪 io。<ol>
+<li>Eventpoll 会将其加入到 wq 队列中，阻塞用户线程。</li>
+<li>当 socket 接收到数据时，中断回调程序一方面修改 rdlist“就绪列表”，另一方面唤醒 eventpoll 等待队列中的用户线程</li>
+<li>用户线程唤醒后，根据 rdlist 可知哪些 io 事件就绪了，省去遍历所有 io 事件操作，提高效率。</li>
+</ol>
+</li>
+</ol>
+<h3 id="2-3-2-水平触发与边缘触发"><a href="#2-3-2-水平触发与边缘触发" class="headerlink" title="2.3.2 水平触发与边缘触发"></a>2.3.2 水平触发与边缘触发</h3><p>水平触发与边缘触发是指数据就绪后，通知次数：</p>
+<ul>
+<li><strong>边缘触发</strong>(edge-triggered)：当文件描述符关联的读内核缓冲区由空转化为非空的时候，则发出可读信号进行通知，<br>当文件描述符关联的内核写缓冲区由满转化为不满的时候，则发出可写信号进行通知</li>
+<li><strong>水平触发</strong>(level-trggered)：只要文件描述符关联的读内核缓冲区非空，有数据可以读取，就一直发出可读信号进行通知，<br>当文件描述符关联的内核写缓冲区不满，有空间可以写入，就一直发出可写信号进行通知<br>LT 模式支持阻塞和非阻塞两种方式。Epoll 默认的模式是 LT<br>由于信号发送不同，所以在进行<strong>编码</strong>时也存在不 s 同：</li>
+<li>当水平触发模式下，代码可以从缓存取读取定长的数据，不用担心缓冲区数据未读取完毕，当数据未读完时，会一直发送读取信号。</li>
+<li>当边缘触发模式下，在接受到读取信号时，需要使用循环，一直读取，保证缓冲区中数据读取完毕。因为边缘触发只发送一次信号，如果不读取完毕，则数据会不完整。</li>
+</ul>
+<h3 id="2-3-3-epoll-高效的原因"><a href="#2-3-3-epoll-高效的原因" class="headerlink" title="2.3.3 epoll 高效的原因"></a>2.3.3 epoll 高效的原因</h3><ol>
+<li>功能分离：使用 <code>epoll_ctl</code> 维护等待队列，再调用 <code>epoll_wait</code> 阻塞进程</li>
+<li>就绪列表：使用就绪列表，来清晰的获取哪个 io 描述符存在就绪事件，避免不必要的遍历。</li>
+<li>红黑树结构：对文件描述符的增删是 logN 的时间。</li>
+</ol>
+<h1 id="3-Netty-IO模型"><a href="#3-Netty-IO模型" class="headerlink" title="3 Netty IO模型"></a>3 Netty IO模型</h1><p>Netty 的 I&#x2F;O 模型是基于非阻塞 I&#x2F;O 实现的，底层依赖的是 JDK NIO 框架的多路复用器 Selector。一个多路复用器 Selector 可以同时轮询多个 Channel，采用 epoll 模式后，只需要一个线程负责 Selector 的轮询，就可以接入成千上万的客户端。</p>
+<p>在 I&#x2F;O 多路复用的场景下，当有数据处于就绪状态后，需要一个事件分发器（Event Dispather），它负责将读写事件分发给对应的读写事件处理器（Event Handler）。事件分发器有两种设计模式：Reactor 和 Proactor，<strong>Reactor 采用同步 I&#x2F;O， Proactor 采用异步 I&#x2F;O</strong>。</p>
+<p>Reactor 实现相对简单，适合处理耗时短的场景，对于耗时长的 I&#x2F;O 操作容易造成阻塞。Proactor 性能更高，但是实现逻辑非常复杂，目前主流的事件驱动模型还是依赖 select 或 epoll 来实现。</p>
+<p>​<img src="/../../images/Netty/Netty%20IO%E6%A8%A1%E5%9E%8B-6.png" srcset="/img/loading.gif" lazyload>​</p>
+<p>上图所描述的便是 Netty 所采用的主从 Reactor 多线程模型，所有的 I&#x2F;O 事件都注册到一个 I&#x2F;O 多路复用器上，当有 I&#x2F;O 事件准备就绪后，I&#x2F;O 多路复用器会将该 I&#x2F;O 事件通过事件分发器分发到对应的事件处理器中。该线程模型避免了同步问题以及多线程切换带来的资源开销，真正做到高性能、低延迟。</p>
+<h2 id="3-1-Netty-相比-JDK-NIO-有哪些突出的优势。"><a href="#3-1-Netty-相比-JDK-NIO-有哪些突出的优势。" class="headerlink" title="3.1 Netty 相比 JDK NIO 有哪些突出的优势。"></a>3.1 Netty 相比 JDK NIO 有哪些突出的优势。</h2><ul>
+<li><strong>易用性。</strong>  我们使用 JDK NIO 编程需要了解很多复杂的概念，比如 Channels、Selectors、Sockets、Buffers 等，编码复杂程度令人发指。相反，Netty 在 NIO 基础上进行了更高层次的封装，屏蔽了 NIO 的复杂性；Netty 封装了更加人性化的 API，统一的 API（阻塞&#x2F;非阻塞） 大大降低了开发者的上手难度；与此同时，Netty 提供了很多开箱即用的工具，例如常用的行解码器、长度域解码器等，而这些在 JDK NIO 中都需要你自己实现。</li>
+<li><strong>稳定性。</strong>  Netty 更加可靠稳定，修复和完善了 JDK NIO 较多已知问题，例如臭名昭著的 select 空转导致 CPU 消耗 100%，TCP 断线重连，keep-alive 检测等问题。</li>
+<li><strong>可扩展性。</strong>  Netty 的可扩展性在很多地方都有体现，这里我主要列举其中的两点：一个是可定制化的线程模型，用户可以通过启动的配置参数选择 Reactor 线程模型；另一个是可扩展的事件驱动模型，将框架层和业务层的关注点分离。大部分情况下，开发者只需要关注 ChannelHandler 的业务逻辑实现。</li>
+</ul>
+<h2 id="3-2-更低的资源消耗"><a href="#3-2-更低的资源消耗" class="headerlink" title="3.2 更低的资源消耗"></a>3.2 更低的资源消耗</h2><p>作为网络通信框架，需要处理海量的网络数据，那么必然面临有大量的网络对象需要创建和销毁的问题，对于 JVM GC 并不友好。为了降低 JVM 垃圾回收的压力，Netty 主要采用了两种优化手段：</p>
+<ul>
+<li><strong>对象池复用技术。</strong>  Netty 通过复用对象，避免频繁创建和销毁带来的开销。</li>
+<li><strong>零拷贝技术。</strong>  除了操作系统级别的零拷贝技术外，Netty 提供了更多面向用户态的零拷贝技术，例如 Netty 在 I&#x2F;O 读写时直接使用 DirectBuffer，从而避免了数据在堆内存和堆外内存之间的拷贝。</li>
+</ul>
+<p>因为 Netty 不仅做到了高性能、低延迟以及更低的资源消耗，还完美弥补了 Java NIO 的缺陷，所以在网络编程时越来越受到开发者们的青睐。</p>
+<p>‍</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Netty/" class="print-no-link">#Netty</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/06/01/Netty/1.5-Java%E5%A0%86%E5%A4%96%E5%86%85%E5%AD%98/" title="1.5-Java堆外内存">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">1.5-Java堆外内存</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

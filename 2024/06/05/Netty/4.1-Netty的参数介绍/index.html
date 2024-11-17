@@ -1,0 +1,645 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Shi Lei">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1 系统参数调优1.1 Linux系统参数1.1.1 单个TCP句柄打开Socket句柄数量限制进行TCP连接时，系统为每个TCP连接创建一个socket句柄，也就是一个文件句柄，但是Linux对每个进程打开的文件句柄数量做了限制，如果超出：报错“Too many open file” 。使用ulimit-n [xxx]可临时修改（注意： ulimit命令修改的数值只对当前登录用户的目前使用环境有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="4.1-Netty的参数介绍">
+<meta property="og:url" content="http://example.com/2024/06/05/Netty/4.1-Netty%E7%9A%84%E5%8F%82%E6%95%B0%E4%BB%8B%E7%BB%8D/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="1 系统参数调优1.1 Linux系统参数1.1.1 单个TCP句柄打开Socket句柄数量限制进行TCP连接时，系统为每个TCP连接创建一个socket句柄，也就是一个文件句柄，但是Linux对每个进程打开的文件句柄数量做了限制，如果超出：报错“Too many open file” 。使用ulimit-n [xxx]可临时修改（注意： ulimit命令修改的数值只对当前登录用户的目前使用环境有">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/Netty/Netty%E7%9A%84%E5%8F%82%E6%95%B0%E4%BB%8B%E7%BB%8D.png">
+<meta property="og:image" content="http://example.com/images/Netty/Netty%E7%9A%84%E5%8F%82%E6%95%B0%E4%BB%8B%E7%BB%8D-1.png">
+<meta property="og:image" content="http://example.com/images/Netty/Netty%E7%9A%84%E5%8F%82%E6%95%B0%E4%BB%8B%E7%BB%8D-2.png">
+<meta property="article:published_time" content="2024-06-04T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-07-12T13:30:37.740Z">
+<meta property="article:author" content="Shi Lei">
+<meta property="article:tag" content="Netty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/images/Netty/Netty%E7%9A%84%E5%8F%82%E6%95%B0%E4%BB%8B%E7%BB%8D.png">
+  
+  
+  
+  <title>4.1-Netty的参数介绍 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":30,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ALEI</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="4.1-Netty的参数介绍"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-06-05 00:00" pubdate>
+          2024年6月5日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          15 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">4.1-Netty的参数介绍</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="1-系统参数调优"><a href="#1-系统参数调优" class="headerlink" title="1 系统参数调优"></a>1 系统参数调优</h1><h2 id="1-1-Linux系统参数"><a href="#1-1-Linux系统参数" class="headerlink" title="1.1 Linux系统参数"></a>1.1 Linux系统参数</h2><h3 id="1-1-1-单个TCP句柄打开Socket句柄数量限制"><a href="#1-1-1-单个TCP句柄打开Socket句柄数量限制" class="headerlink" title="1.1.1 单个TCP句柄打开Socket句柄数量限制"></a>1.1.1 单个TCP句柄打开Socket句柄数量限制</h3><p>进行TCP连接时，系统为每个TCP连接创建一个socket句柄，也就是一个文件句柄，但是Linux对每个进程打开的文件句柄数量做了限制，如果超出：报错“Too many open file” 。使用<code>ulimit-n [xxx]</code>可临时修改（注意： ulimit命令修改的数值只对当前登录用户的目前使用环境有效，系统重启或者用户退出后就会失效，<strong>所以可以作为程序启动脚本一部分，让它程序启动前执行</strong>）</p>
+<h3 id="1-1-2-SO-TIMEOUT"><a href="#1-1-2-SO-TIMEOUT" class="headerlink" title="1.1.2 SO_TIMEOUT"></a>1.1.2 SO_TIMEOUT</h3><p>NIO编程都是阻塞式IO，理论上阻塞可以一直阻塞下去，因为可通过设置SO_TIMEOUT来设置最大阻塞时间。</p>
+<h2 id="1-2-Netty支持的系统参数"><a href="#1-2-Netty支持的系统参数" class="headerlink" title="1.2 Netty支持的系统参数"></a>1.2 Netty支持的系统参数</h2><h3 id="1-2-1-SocketChannel"><a href="#1-2-1-SocketChannel" class="headerlink" title="1.2.1 SocketChannel"></a>1.2.1 SocketChannel</h3><ul>
+<li><strong>SO_SNDBUF</strong>：TCP 数据发送缓冲区大小，默认是4K，目前Linux支持 [min， default， max]动态调整，一般不用调整这个参数。</li>
+<li><strong>SO_RCVBUF</strong>：TCP 数据接受缓冲区大小，默认是4K，目前Linux支持 [min， default， max]动态调整，一般不用调整这个参数</li>
+<li><strong>SO_KEEPALIVE</strong>：TCP层的keepalive，一般都是使用应用层的keepalive，所以SO_KEEPALIVE控制的TCP层keepalive默认关闭即可。</li>
+<li><strong>SO_REUSEADDR</strong>：默认关闭，在部分场景下，如多网卡绑定相同端口或让关闭的连接端释放端口可更早的使用，可开启。是值多网卡下不同的IP相同的port进行绑定。</li>
+<li><strong>SO_LINGER</strong>：默认不开启。是指关闭Socket的延迟时间，默认禁用该功能， socket.close（）方法立即返回</li>
+<li><strong>IP_TOS</strong>：指ip包的优先级，是指服务质量。通过设置 IP 头部的 Type-of-Service 字段，用于描述 IP 包的优先级和 QoS 选项。例如倾向于延时还是吞吐量。默认值是0000，如果是1000则表示最小延迟，0001则表示最大吞吐量。（这个选项可能部分实现不支持）</li>
+<li><strong>TCP_NODELAY</strong>：设置是否启用Nagle算法：用将小的碎片数据连接成更大的报文来提高发送效率。默认False，如果需要发送一些较小的报文，则需要禁用该算法。</li>
+</ul>
+<h2 id="1-3-ServerSocketChannel"><a href="#1-3-ServerSocketChannel" class="headerlink" title="1.3 ServerSocketChannel"></a>1.3 ServerSocketChannel</h2><p>ServerSocketChannel主要用户创建连接，并不是一个真正的连接实体，其参数较少。</p>
+<ul>
+<li><strong>SO_RCVBUF</strong>：接收数据缓冲区，ServerSocketChannel主要作用就是accept连接，然后创建socket channel。这个SO_RCVBUF值就是channel默认的接收缓冲区大小。为什么没有SO_SNDBUF，是因为SO_SNDBUF可在发送数据前设置，因此不需要单独提前设置值。</li>
+<li><strong>SO_REUSEADDR</strong>：是否可以重用端☐,默认false。</li>
+<li><strong>SO_BACKLOG</strong>：最大的等待连接数量。当并发压力较大时，服务器无法同时接收大量连接，未连接的请求将会保存到queue中，queue的大小就是SO_BACKLOG值确定，默认: 128。使用方式: <code>javaChannel().bind(localAddress, config.getBacklog());</code></li>
+</ul>
+<h1 id="2-Netty内部核心参数"><a href="#2-Netty内部核心参数" class="headerlink" title="2 Netty内部核心参数"></a>2 Netty内部核心参数</h1><p>Netty内部核心参数控制了Netty的内部整个行为。Netty内部核心参数分为ChannelOption与System property</p>
+<h2 id="2-1-ChannelOption"><a href="#2-1-ChannelOption" class="headerlink" title="2.1 ChannelOption"></a>2.1 ChannelOption</h2><p>ChannelOption中，如果以SO开头，则表示是系统参数，否则表示netty内部参数。</p>
+<ul>
+<li><strong>WRITE_BUFFER_WATER_MARK</strong>：高低水位线、间接防止写数据OOM， 默认32k(低水位线)与64k(高水位线)。在写数据时，如果数据较多，超过高水位线，则netty会将其设置为不可写，避免OOM。注意，这个值是channel级别的，即每个连接都是默认值32与64。</li>
+<li><strong>CONNECT_TIMEOUT_MILEIS</strong>：客户端连接服务器最大允许时间，默认30s。</li>
+<li><strong>MAX_MESSAGES_PER_READ</strong>：最大允许“连续”读次数，默认16次。</li>
+<li><strong>WRITE_SPIN_COUNT</strong>：最大允许“连读”写次数，默认16次。</li>
+<li><strong>ALLOCATOR</strong>：ByteBuf分配器，默认ByteBufAllocator.DEFAULT：大多池化、堆外。</li>
+<li><strong>RCVBUF_ALLOCATOR</strong>：数据接收ByteBuf分配大小计算器+读次数控制器， 其作用是负责计算为接收数据分配多少ByteBuf。默认AdaptiveRecvByteBufAllocator，主要有两大功能：<ul>
+<li>动态计算下一次分配的bytebuf大小。</li>
+<li>动态判断是否可继续读。</li>
+</ul>
+</li>
+<li><strong>AUTO_READ</strong>：是否监听“读事件。默认:监听“读”事件。设置此标记的方法也触发注册或移除读事件的监听。</li>
+<li><strong>AUTO_CLOSE</strong>：“写数据”失败，是否关闭连接。默认打开，因为不关闭，下次还写，还是失败怎么办！</li>
+<li><strong>MESSAGE_SIZE_ESTIMATOR</strong>：数据（ByteBuf、 FileRegion等）大小计算器。默认值DefaultMessageSizeEstimator.DEFAULT 例如计算ByteBuf: byteBuf.readableBytes()</li>
+<li><strong>SINGLE_EVENTEXECUTOR_PER_GROUP</strong>：当增加一个handler且指定EventExecutorGroup时，决定这个handler是否只用EventExecutorGroup中的一个固定的executor(取决于next()实现。默认为true，无论handler是否共享，都会唯一的绑定一个eventExecutor。</li>
+<li><strong>ALLOW_HALF_CLOSURE</strong>：关闭连接时，是否允许半关。默认不允许。</li>
+</ul>
+<h2 id="2-2-系统属性"><a href="#2-2-系统属性" class="headerlink" title="2.2 系统属性"></a>2.2 系统属性</h2><ul>
+<li><strong>io.netty.eventLoopThreads</strong>：eventloop中 IO thread的数量，默认是availableProcessors * 2</li>
+<li><strong>io.netty.availableProcessors</strong>：指定availableProcessors 的值。部分场景下，netty会在容器中运行，在jdk10以下，availableProcessors 的值是宿主机的cpu值，并不是容器的cpu。所以此时需要通过此参数明确指定。</li>
+<li><strong>io.netty.allocator.type</strong>：控制bytebuf是池化或者非池化，默认池化。</li>
+<li><strong>io.netty.noPreferDirect</strong>：控制bytebuf是堆内还是堆外，默认堆外。</li>
+<li><strong>io.netty.noUnsafe</strong>：是否使用sun.misc.Unsafe。这些方法是jdk底层的方法，在不同版本中，这些方法可能会被移除，因此导致netty服务异常。</li>
+<li><strong>io.netty.leakDetection.level</strong>：netty提供的内存泄露检测，默认是simple</li>
+<li><strong>io.netty.native.workdir&#x2F;io.netty.tmpdir</strong>：netty的临时目录，会从jar中解出natice库存放的临时目录。</li>
+<li><strong>io.netty.processld&#x2F;io.netty.machineld</strong>：进程号与机器硬件地址，作用是计算唯一的channel ID</li>
+<li><strong>io.netty.eventLoop.maxPendingTasks&#x2F;io.netty.eventexecutor.maxPendingTasks</strong>：存的task是数目，默认是Integer最大值，不能低于16</li>
+<li><strong>io.netty.handler.ssl.noOpenSsl</strong>：是否关闭open ssl使用，默认不关闭。</li>
+<li><strong>workerGroup.setloRatio(50)</strong> ：设置io线程处理io事件的比例，因为在默认情况下，io线程也需要处理handle的业务逻辑，因此可通过这里设置处理IO事件的比例。</li>
+</ul>
+<h1 id="3-特殊参数解释"><a href="#3-特殊参数解释" class="headerlink" title="3 特殊参数解释"></a>3 特殊参数解释</h1><h2 id="3-1-地址重用SO-REUSEADDR"><a href="#3-1-地址重用SO-REUSEADDR" class="headerlink" title="3.1 地址重用SO_REUSEADDR"></a>3.1 地址重用SO_REUSEADDR</h2><p>功能：</p>
+<ol>
+<li>开启后多网卡绑定相同端口或让关闭的连接端释放端口可更早的使用。</li>
+<li>多网卡下不同的IP相同的port进行绑定</li>
+</ol>
+<p>其中关闭的连接端释放端口可更早的使用，其原理如下：</p>
+<p>在tcp协议中，client在关闭连接后，会有一个TIME-WAIT的时间，一般是2*(报文有效最大时间)，一般是60s，因此client的端口会在60s内不可用。因此可通过此设置，强制改变等待时间，让端口更早的可用，但是改变的时间与网络服务状态有关，如果网络服务很好，则可设置为1s，否则可能会导致错包。</p>
+<p>​<img src="/../../images/Netty/Netty%E7%9A%84%E5%8F%82%E6%95%B0%E4%BB%8B%E7%BB%8D.png" srcset="/img/loading.gif" lazyload>​</p>
+<h2 id="3-2-SO-LINGER-scoket延迟关闭"><a href="#3-2-SO-LINGER-scoket延迟关闭" class="headerlink" title="3.2 SO_LINGER scoket延迟关闭"></a>3.2 SO_LINGER scoket延迟关闭</h2><p>就是指在关闭连接时，方法return的时间。正常默认情况下是直接返回，如果打开的话，会在收到ack后返回。</p>
+<p>​<img src="/../../images/Netty/Netty%E7%9A%84%E5%8F%82%E6%95%B0%E4%BB%8B%E7%BB%8D-1.png" srcset="/img/loading.gif" lazyload>​</p>
+<h2 id="3-3-ALLOW-HALF-CLOSURE-半关"><a href="#3-3-ALLOW-HALF-CLOSURE-半关" class="headerlink" title="3.3 ALLOW_HALF_CLOSURE 半关"></a>3.3 ALLOW_HALF_CLOSURE 半关</h2><p>半关是指客户端与服务端关闭一个channel，如下图，半关时要调用单独的方法</p>
+<p>​<img src="/../../images/Netty/Netty%E7%9A%84%E5%8F%82%E6%95%B0%E4%BB%8B%E7%BB%8D-2.png" srcset="/img/loading.gif" lazyload>​</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Netty/" class="print-no-link">#Netty</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/06/05/Netty/3.10-Netty%E7%9A%84FastThreadLocal/" title="3.10-Netty的FastThreadLocal">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">3.10-Netty的FastThreadLocal</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/06/05/Netty/4.2-Netty%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B/" title="4.2-Netty使用示例">
+                        <span class="hidden-mobile">4.2-Netty使用示例</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

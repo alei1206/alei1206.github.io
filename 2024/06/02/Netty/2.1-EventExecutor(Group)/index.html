@@ -1,0 +1,662 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Shi Lei">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1 JDK Executor​​ JDK 的 Executor 体系如上图所示，整体的设计思路为顶级接口-次级接口-抽象类-实现类。其中：  Executor：为顶级接口，内部只有一个 execute()，约定在单个线程或者线程池中执行命令功能。该接口主要是为了解耦组要执行 Runnable 任务与调用者之间的关联。 ExecutorService：该接口继承自 Executor 接口，添加了 s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2.1-EventExecutor(Group)">
+<meta property="og:url" content="http://example.com/2024/06/02/Netty/2.1-EventExecutor(Group)/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="1 JDK Executor​​ JDK 的 Executor 体系如上图所示，整体的设计思路为顶级接口-次级接口-抽象类-实现类。其中：  Executor：为顶级接口，内部只有一个 execute()，约定在单个线程或者线程池中执行命令功能。该接口主要是为了解耦组要执行 Runnable 任务与调用者之间的关联。 ExecutorService：该接口继承自 Executor 接口，添加了 s">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/Netty/EventExecutor(Group).png">
+<meta property="og:image" content="http://example.com/images/Netty/EventExecutor(Group)-1.png">
+<meta property="og:image" content="http://example.com/images/Netty/EventExecutor(Group)-2.png">
+<meta property="og:image" content="http://example.com/images/Netty/EventExecutor(Group)-3.png">
+<meta property="og:image" content="http://example.com/images/Netty/EventExecutor(Group)-4.png">
+<meta property="article:published_time" content="2024-06-01T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-07-12T13:30:37.725Z">
+<meta property="article:author" content="Shi Lei">
+<meta property="article:tag" content="Netty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/images/Netty/EventExecutor(Group).png">
+  
+  
+  
+  <title>2.1-EventExecutor(Group) - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":30,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ALEI</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="2.1-EventExecutor(Group)"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-06-02 00:00" pubdate>
+          2024年6月2日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          21 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">2.1-EventExecutor(Group)</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="1-JDK-Executor"><a href="#1-JDK-Executor" class="headerlink" title="1 JDK Executor"></a>1 JDK Executor</h1><p>​<img src="/../../images/Netty/EventExecutor(Group).png" srcset="/img/loading.gif" lazyload>​</p>
+<p>JDK 的 Executor 体系如上图所示，整体的设计思路为顶级接口-次级接口-抽象类-实现类。其中：</p>
+<ul>
+<li><strong>Executor</strong>：为顶级接口，内部只有一个 <code>execute()</code>，约定在单个线程或者线程池中执行命令功能。该接口主要是为了解耦组要执行 Runnable 任务与调用者之间的关联。</li>
+<li><strong>ExecutorService</strong>：该接口继承自 Executor 接口，添加了 shutdown、shutdownAll、submit、invokeAll 等一系列对线程的操作方法。</li>
+<li><strong>AbstractExecutorService</strong>: 这是一个抽象类，通过模板方法设计模式抽取并实现 ExecuotrService 接口的部分方法，以做到方法复用。</li>
+<li><strong>ThreadPoolExecutor</strong>：这是 Java 线程池最核心的一个类，该类继承自 AbstractExecutorService，主要功能是创建线程池，给任务分配线程资源，执行任务。</li>
+<li><strong>ScheduledExecutorService</strong>：此接口提供定义执行任务功能。</li>
+<li><strong>ScheduledThreadPoolExecutor</strong> ：此类是 ScheduledExecutorService 的具体实现，可定时执行某些任务。</li>
+</ul>
+<h1 id="2-EventExecutor-Group"><a href="#2-EventExecutor-Group" class="headerlink" title="2 EventExecutor (Group)"></a>2 EventExecutor (Group)</h1><p>本章主要介绍 Netty 内部的 EventExecutor 与 EventExecutorGroup 的主要机制，Netty 提倡异步处理事件，其内部便是通过 EventExecutor 与 EventExecutorGroup 相互配合，实现对任务的异步处理。<br>在 Netty 中，EventExecutor（执行器）与 EventExecutorGroup（执行器组）与 jdk 中线程与线程池的概念类似，是对其进一步封装，EventExecutor 是用于执行任务，EventExecutorGroup 用于管理内部的 EventExecutor，当任务被提交到 EventExecutorGroup 时，其最终会被内部的 EventExecutor 异步执行。</p>
+<h2 id="2-1-EventExecutorGroup"><a href="#2-1-EventExecutorGroup" class="headerlink" title="2.1 EventExecutorGroup"></a>2.1 EventExecutorGroup</h2><h3 id="2-1-1-EventExecutorGroup"><a href="#2-1-1-EventExecutorGroup" class="headerlink" title="2.1.1 EventExecutorGroup"></a>2.1.1 EventExecutorGroup</h3><p>​<img src="/../../images/Netty/EventExecutor(Group)-1.png" srcset="/img/loading.gif" lazyload>​</p>
+<p>EventExecutorGroup 接口继承 ScheduledExecutorService 接口，并在其接口上，增加额外的方法，扩展其功能，用于管理内部的执行器（EventExecutor），如下所示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">EventExecutorGroup</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">ScheduledExecutorService</span>, Iterable&lt;EventExecutor&gt; &#123;<br><br>    <span class="hljs-comment">// 判断当前执行器组内部的执行器是否正在被关闭或者已经关闭。</span><br>    <span class="hljs-type">boolean</span> <span class="hljs-title function_">isShuttingDown</span><span class="hljs-params">()</span>;<br>    <span class="hljs-comment">// 用于安全的关闭当前执行器组</span><br>    Future&lt;?&gt; shutdownGracefully();<br>    Future&lt;?&gt; shutdownGracefully(<span class="hljs-type">long</span> quietPeriod, <span class="hljs-type">long</span> timeout, TimeUnit unit);<br>    <span class="hljs-comment">// 获取执行器是否关闭完成对象</span><br>    Future&lt;?&gt; terminationFuture();<br>    <span class="hljs-comment">// 返回下一个执行器</span><br>    EventExecutor <span class="hljs-title function_">next</span><span class="hljs-params">()</span>;<br>    <span class="hljs-meta">@Override</span><br>    Iterator&lt;EventExecutor&gt; <span class="hljs-title function_">iterator</span><span class="hljs-params">()</span>; <span class="hljs-comment">//获取EventExecutor迭代器</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>next()</code>：在 EventExecutorGroup 中会管理多个 EventExecutor，通过此方法可返回 EventExecutorGroup 中管理的下一个执行器 EventExecutor。Netty 中提倡异步机制，在提交任务到 EventExecutorGroup 中的时候，都会获取此 EventExecutorGroup 中的下个 EventExecutor 进行处理。在 <code>next()</code> 函数中，会通过 <code>chooser.next()</code> 获取到下一个 EventExecutor，其中 chooser 对象是一个选择器，选择的逻辑是 <code>this.executors[(int)Math.abs(this.idx.getAndIncrement() % (long)this.executors.length)];</code> 从此看出，是简单的根据下标进行选择下一个 EventExecutor<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> &lt;T&gt; Future&lt;T&gt; <span class="hljs-title function_">submit</span><span class="hljs-params">(Callable&lt;T&gt; task)</span> &#123;<br>	<span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.next().submit(task);   <span class="hljs-comment">//提交任务到下个EventExecutor中执行</span><br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><code>iterator()</code>：<code>Iterator&lt;EventExecutor&gt; iterator()</code> 一个迭代器，用于迭代获取下个 EventExecutor。</li>
+<li><code>shutdownGracefully()</code>：用于优雅的关闭内部的执行器，在关闭前，会先处理完当前任务。</li>
+</ul>
+<h3 id="2-1-2-DefaultEventExecutorGroup"><a href="#2-1-2-DefaultEventExecutorGroup" class="headerlink" title="2.1.2 DefaultEventExecutorGroup"></a>2.1.2 DefaultEventExecutorGroup</h3><p>DefaultEventExecutorGroup 是独立与 Netty 中的网络通信模块，类似于 JDK 中的线程池，用于提供异步执行任务的能力。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-type">DefaultEventExecutorGroup</span> <span class="hljs-variable">eventExecutors</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">DefaultEventExecutorGroup</span>(<span class="hljs-number">1</span>);<br>eventExecutors.submit(() -&gt; &#123;System.out.println(<span class="hljs-string">&quot;Hello World!&quot;</span>);&#125;);<br></code></pre></td></tr></table></figure>
+
+<p>DefaultEventExecutorGroup 是 EventExecutorGroup 的默认实现，在创建时，可执行内部执行器数量。其主要逻辑如下：</p>
+<ul>
+<li>提供不同的构造器，可指定构造器数，线程工厂等。</li>
+<li>DefaultEventExecutorGroup 默认的执行器是 DefaultEventExecutor。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-title function_">DefaultEventExecutorGroup</span><span class="hljs-params">(<span class="hljs-type">int</span> nThreads)</span> &#123;<br>	<span class="hljs-built_in">this</span>(nThreads, <span class="hljs-literal">null</span>);<br>&#125;<br><span class="hljs-keyword">public</span> <span class="hljs-title function_">DefaultEventExecutorGroup</span><span class="hljs-params">(<span class="hljs-type">int</span> nThreads, ThreadFactory threadFactory)</span> &#123;<br>	<span class="hljs-built_in">this</span>(nThreads, threadFactory, SingleThreadEventExecutor.DEFAULT_MAX_PENDING_EXECUTOR_TASKS,<br>			RejectedExecutionHandlers.reject());<br>&#125;<br><span class="hljs-keyword">public</span> <span class="hljs-title function_">DefaultEventExecutorGroup</span><span class="hljs-params">(<span class="hljs-type">int</span> nThreads, ThreadFactory threadFactory, <span class="hljs-type">int</span> maxPendingTasks,</span><br><span class="hljs-params">								 RejectedExecutionHandler rejectedHandler)</span> &#123;<br>	<span class="hljs-built_in">super</span>(nThreads, threadFactory, maxPendingTasks, rejectedHandler);<br>&#125;<br><span class="hljs-meta">@Override</span><br><span class="hljs-keyword">protected</span> EventExecutor <span class="hljs-title function_">newChild</span><span class="hljs-params">(Executor executor, Object... args)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>	<span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">DefaultEventExecutor</span>(<span class="hljs-built_in">this</span>, executor, (Integer) args[<span class="hljs-number">0</span>], (RejectedExecutionHandler) args[<span class="hljs-number">1</span>]);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-1-3-MultithreadEventExecutorGroup"><a href="#2-1-3-MultithreadEventExecutorGroup" class="headerlink" title="2.1.3 MultithreadEventExecutorGroup"></a>2.1.3 MultithreadEventExecutorGroup</h3><p>MultithreadEventExecutorGroup 是 DefaultEventExecutorGroup 的父类，DefaultEventExecutorGroup 中的大部分功能均在 MultithreadEventExecutorGroup 中实现。其主要作用是根据参数创建出多个执行器，用于执行任务，其主要逻辑如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">protected</span> <span class="hljs-title function_">MultithreadEventExecutorGroup</span><span class="hljs-params">(<span class="hljs-type">int</span> nThreads, Executor executor,</span><br><span class="hljs-params">                                        EventExecutorChooserFactory chooserFactory, Object... args)</span> &#123;<br>    <span class="hljs-keyword">if</span> (nThreads &lt;= <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">IllegalArgumentException</span>(String.format(<span class="hljs-string">&quot;nThreads: %d (expected: &gt; 0)&quot;</span>, nThreads));<br>    &#125;<br>    <span class="hljs-keyword">if</span> (executor == <span class="hljs-literal">null</span>) &#123;<br>        executor = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ThreadPerTaskExecutor</span>(newDefaultThreadFactory());<br>    &#125;<br>    children = <span class="hljs-keyword">new</span> <span class="hljs-title class_">EventExecutor</span>[nThreads];<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; nThreads; i ++) &#123;    <span class="hljs-comment">//循环创建多个执行器</span><br>        <span class="hljs-type">boolean</span> <span class="hljs-variable">success</span> <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>;<br>        <span class="hljs-keyword">try</span> &#123;<br>            children[i] = newChild(executor, args);  <span class="hljs-comment">//创建执行器，并填充到数组</span><br>            success = <span class="hljs-literal">true</span>;<br>        &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>            <span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> Think about if this is a good exception type</span><br>            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">IllegalStateException</span>(<span class="hljs-string">&quot;failed to create a child event loop&quot;</span>, e);<br>        &#125; <span class="hljs-keyword">finally</span> &#123;<br>            <span class="hljs-keyword">if</span> (!success) &#123;<br>                <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">j</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; j &lt; i; j ++) &#123;<br>                    children[j].shutdownGracefully();<br>                &#125;<br><br>                <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">j</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; j &lt; i; j ++) &#123;<br>                    <span class="hljs-type">EventExecutor</span> <span class="hljs-variable">e</span> <span class="hljs-operator">=</span> children[j];<br>                    <span class="hljs-keyword">try</span> &#123;<br>                        <span class="hljs-keyword">while</span> (!e.isTerminated()) &#123;<br>                            e.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);<br>                        &#125;<br>                    &#125; <span class="hljs-keyword">catch</span> (InterruptedException interrupted) &#123;<br>                        <span class="hljs-comment">// Let the caller handle the interruption.</span><br>                        Thread.currentThread().interrupt();<br>                        <span class="hljs-keyword">break</span>;<br>                    &#125;<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>    chooser = chooserFactory.newChooser(children); <span class="hljs-comment">//创建默认的选择器，用于选择下一个执行器</span><br><span class="hljs-comment">//·········省略部分代码·········</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>从上文代码中可以看出：</p>
+<ol>
+<li>MultithreadEventExecutorGroup 内部使用数组保存多个执行器。</li>
+<li>根据 chooser 对象定义如何从数组中获取目标执行器（默认是根据下标获取执行器）</li>
+<li>通过 <code>newChild()</code> 创建出默认的执行器，默认的实现是位于 <code>DefaultEventExecutorGroup#newChild()</code> 中（见2.1.2节）。</li>
+<li>默认的 executor 是 ThreadPerTaskExecutor，此 executor 的作用是创建出执行器对应的内部线程，具体见后文。</li>
+</ol>
+<h3 id="2-1-4-ThreadPerTaskExecutor"><a href="#2-1-4-ThreadPerTaskExecutor" class="headerlink" title="2.1.4 ThreadPerTaskExecutor"></a>2.1.4 ThreadPerTaskExecutor</h3><p>ThreadPerTaskExecutor 的代码如下文所示，其主要逻辑即是创建一个新的线程执行任务。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java">Public <span class="hljs-keyword">final</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">ThreadPerTaskExecutor</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">Executor</span> &#123;<br>    Private <span class="hljs-keyword">final</span> ThreadFactory threadFactory;<br><br>    Public <span class="hljs-title function_">ThreadPerTaskExecutor</span> <span class="hljs-params">(ThreadFactory threadFactory)</span> &#123;<br>        This. ThreadFactory = ObjectUtil.CheckNotNull (threadFactory, <span class="hljs-string">&quot;threadFactory&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    Public <span class="hljs-keyword">void</span> <span class="hljs-title function_">execute</span> <span class="hljs-params">(Runnable command)</span> &#123;<br>        ThreadFactory. NewThread (command). Start ();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-1-5-FastThreadLocalThread"><a href="#2-1-5-FastThreadLocalThread" class="headerlink" title="2.1.5 FastThreadLocalThread"></a>2.1.5 FastThreadLocalThread</h3><h4 id="2-1-5-1-线程创建"><a href="#2-1-5-1-线程创建" class="headerlink" title="2.1.5.1 线程创建"></a>2.1.5.1 线程创建</h4><p>在2.1.3章节，如果executor为null，则会通过<code>new ThreadPerTaskExecutor(newDefaultThreadFactory());</code>逻辑构建executor，其中通过<code>newDefaultThreadFactory()</code>构建默认的线程工厂。在默认的线程工厂中，创建线程逻辑如下，从代码中可知，线程类型为<code>FastThreadLocalThread</code>类型线程。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> Thread <span class="hljs-title function_">newThread</span><span class="hljs-params">(Runnable r)</span> &#123;<br>	<span class="hljs-type">Thread</span> <span class="hljs-variable">t</span> <span class="hljs-operator">=</span> newThread(FastThreadLocalRunnable.wrap(r), prefix + nextId.incrementAndGet());<br>	<span class="hljs-keyword">try</span> &#123;<br>		<span class="hljs-keyword">if</span> (t.isDaemon() != daemon) &#123;<br>			t.setDaemon(daemon);<br>		&#125;<br><br>		<span class="hljs-keyword">if</span> (t.getPriority() != priority) &#123;<br>			t.setPriority(priority);<br>		&#125;<br>	&#125; <span class="hljs-keyword">catch</span> (Exception ignored) &#123;<br>		<span class="hljs-comment">// Doesn&#x27;t matter even if failed to set.</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> t;<br>&#125;<br><br><span class="hljs-keyword">protected</span> Thread <span class="hljs-title function_">newThread</span><span class="hljs-params">(Runnable r, String name)</span> &#123;<br>	<span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">FastThreadLocalThread</span>(threadGroup, r, name);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>FastThreadLocalThread</code>线程是Thread线程的子类。与普通线程不同的是，<code>FastThreadLocalThread</code>线程内部含有一个<code>FastThreadLocal</code>属性，在某种程度上，FastThreadLocal会比ThreadLocal的性能更好。<br>在创建线程时，使用了<code>FastThreadLocalRunnable</code>对<code>runnable</code>对象进行包装，此包装的目的是在runnable对象执行完毕后，对相关的<code>fastThreadLocal</code>进行释放，防止内存泄漏。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">final</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">FastThreadLocalRunnable</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">Runnable</span> &#123;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> Runnable runnable;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-title function_">FastThreadLocalRunnable</span><span class="hljs-params">(Runnable runnable)</span> &#123;<br>        <span class="hljs-built_in">this</span>.runnable = ObjectUtil.checkNotNull(runnable, <span class="hljs-string">&quot;runnable&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">run</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">try</span> &#123;<br>            runnable.run();<br>        &#125; <span class="hljs-keyword">finally</span> &#123;<br>            FastThreadLocal.removeAll();  <span class="hljs-comment">//释放内存</span><br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">static</span> Runnable <span class="hljs-title function_">wrap</span><span class="hljs-params">(Runnable runnable)</span> &#123;<br>        <span class="hljs-keyword">return</span> runnable <span class="hljs-keyword">instanceof</span> FastThreadLocalRunnable ? runnable : <span class="hljs-keyword">new</span> <span class="hljs-title class_">FastThreadLocalRunnable</span>(runnable);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-1-5-2-ThreadLocal"><a href="#2-1-5-2-ThreadLocal" class="headerlink" title="2.1.5.2 ThreadLocal"></a>2.1.5.2 ThreadLocal</h4><p>众所周知，在java的线程种，存在ThreadLocalMap实例变量，其本质是一个Map，用于保存值。此Map在使用时，是使用<strong>线性探测</strong>的方式解决hash冲突的问题，如果没有找到空闲的slot，就不断往后尝试，直到找到一个空闲的位置，插入entry，这种方式在经常遇到hash冲突时，影响效率。<br><img src="/../../images/Netty/EventExecutor(Group)-2.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="2-1-5-3-FastThreadLocal"><a href="#2-1-5-3-FastThreadLocal" class="headerlink" title="2.1.5.3 FastThreadLocal"></a>2.1.5.3 FastThreadLocal</h4><p>FastThreadLocal(下文简称ftl)直接使用数组避免了hash冲突的发生，具体做法是：每一个FastThreadLocal实例创建时，分配一个下标index；分配index使用AtomicInteger实现，每个FastThreadLocal都能获取到一个不重复的下标。<br>这要做虽然会产生大量的 index，但避免了在 ThreadLocal 中计算索引下标位置以及处理 hash 冲突带来的损耗（如在存储或删除threadlocal变量时，不用重新计算hash），所以在操作数组时使用固定下标要比使用计算哈希下标有一定的性能优势，特别是在频繁使用时会非常显著，用空间换时间，这就是高性能 Netty 的巧妙之处。<br><img src="/../../images/Netty/EventExecutor(Group)-3.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="2-1-6-执行器组提交任务逻辑"><a href="#2-1-6-执行器组提交任务逻辑" class="headerlink" title="2.1.6 执行器组提交任务逻辑"></a>2.1.6 执行器组提交任务逻辑</h3><p>EventExecutorGroup 接口的作用是提供异步执行任务的功能，以 DefaultEventExecutorGroup 为例，其主要逻辑为：</p>
+<ol>
+<li>创建 DefaultEventExecutorGroup 对象，内部会根据参数，实例化多个 EventExecutor 执行器。</li>
+<li>调用<code>DefaultEventExecutorGroup #submit ()</code>函数提交任务，内部会 next ()筛选出 EventExecutor 执行器，并通过<code>AbstractEventExecutor #submit ()</code>将任务提交到 EventExecutor 中的任务队列。</li>
+</ol>
+<h2 id="2-2-EventExecutor"><a href="#2-2-EventExecutor" class="headerlink" title="2.2 EventExecutor"></a>2.2 EventExecutor</h2><h3 id="2-2-1-EventExecutor"><a href="#2-2-1-EventExecutor" class="headerlink" title="2.2.1 EventExecutor"></a>2.2.1 EventExecutor</h3><p><img src="/../../images/Netty/EventExecutor(Group)-4.png" srcset="/img/loading.gif" lazyload></p>
+<p>EventExecutor 的类图如上图所示：</p>
+<ul>
+<li>EventExecutor 接口表示一个执行器，可执行任务。</li>
+<li>EventExecutorGroup 表示一个执行器组，内部含有一个或多个执行器。</li>
+<li>EventExecutor 继承自 EventExecutorGroup， 表示是一个特殊的执行器组，其特殊之处在于其内部只有一个执行器，即是它本身。</li>
+</ul>
+<h3 id="2-2-2-DefaultEventExecutor"><a href="#2-2-2-DefaultEventExecutor" class="headerlink" title="2.2.2 DefaultEventExecutor"></a>2.2.2 DefaultEventExecutor</h3><p>DefaultEventExecutor 是 Netty 中执行器的默认实现。其内部 run ()定义了此执行器的主要逻辑，即不断的从队列中获取任务，然后执行任务。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Override</span><br>Protected <span class="hljs-keyword">void</span> <span class="hljs-title function_">run</span> <span class="hljs-params">()</span> &#123;<br>    For (;;) &#123;<br>        <span class="hljs-type">Runnable</span> <span class="hljs-variable">task</span> <span class="hljs-operator">=</span> takeTask ();<br>        If (task != <span class="hljs-literal">null</span>) &#123;<br>            Task. Run ();<br>            UpdateLastExecutionTime ();<br>        &#125;<br><br>        If (confirmShutdown ()) &#123;<br>            Break;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>DefaultEventExecutor 的父类是 SingleThreadEventExecutor，表示 DefaultEventExecutor 内部只有一个线程，用于处理任务队列中的任务。</p>
+<h3 id="2-2-3-SingleThreadEventExecutor"><a href="#2-2-3-SingleThreadEventExecutor" class="headerlink" title="2.2.3 SingleThreadEventExecutor"></a>2.2.3 SingleThreadEventExecutor</h3><p>DefaultEventExecutor 内部逻辑较为简单，大部分逻辑在 SingleThreadEventExecutor 中实现。主要有以下逻辑：</p>
+<ul>
+<li><code>inEventLoop ()</code>：表示判断当前执行线程是否为 SingleThreadEventExecutor 内部所绑定的线程（如果是的话，说明当前 EventExecutor 内部执行线程已经启动，如果不是的话，则需要尝试启动 EventExecutor 内部执行线程，用于消费任务），如果是则返回 true。</li>
+<li><code>run ()</code>：定义用于执行消费队列中事件的方法。</li>
+<li><code>doStartThread ()</code>：用于尝试启动 EventExecutor 内部执行线程，如下文所示，其中 executor 为上文中的 ThreadPerTaskExecutor。因此可知，在<code>doStartThread ()</code>中会通过 ThreadPerTaskExecutor 创建一个新的线程，将线程绑定到 EventExecutor 中，然后执行<code>SingleThreadEventExecutor.This.Run ()</code>逻辑，<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java">Private <span class="hljs-keyword">void</span> <span class="hljs-title function_">doStartThread</span> <span class="hljs-params">()</span> &#123;<br>    Assert thread == <span class="hljs-literal">null</span>;<br>    Executor. Execute (<span class="hljs-keyword">new</span> <span class="hljs-title class_">Runnable</span> () &#123;  <br>        <span class="hljs-meta">@Override</span><br>        Public <span class="hljs-keyword">void</span> <span class="hljs-title function_">run</span> <span class="hljs-params">()</span> &#123;<br>            Thread = Thread. CurrentThread ();  <span class="hljs-comment">//绑定线程到 EventExecutor</span><br>            If (interrupted) &#123;<br>                Thread. Interrupt ();<br>            &#125;<br><br>            <span class="hljs-type">Boolean</span> <span class="hljs-variable">success</span> <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>;<br>            UpdateLastExecutionTime ();<br>            Try &#123;<br>                SingleThreadEventExecutor. This. Run ();  <span class="hljs-comment">//执行 run ()，消费事件队列中事件</span><br>                Success = <span class="hljs-literal">true</span>;<br>            &#125; <span class="hljs-keyword">catch</span> (Throwable t) &#123;<br>                Logger. Warn (<span class="hljs-string">&quot;Unexpected exception from an event executor: &quot;</span>, t);<br>            &#125; <span class="hljs-keyword">finally</span> &#123;<br>                <span class="hljs-comment">//·········省略部分代码········</span><br>            &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="2-2-4-执行器执行任务逻辑"><a href="#2-2-4-执行器执行任务逻辑" class="headerlink" title="2.2.4 执行器执行任务逻辑"></a>2.2.4 执行器执行任务逻辑</h3><p>根据前文2.1.5可知，任务最终会通过<code>AbstractEventExecutor #submit ()</code>方法，将任务提交到 EventExecutor 内部。<code>AbstractEventExecutor #submit ()</code>最终会触发执行<code>SingleThreadEventExecutor #execute ()</code>逻辑，具体如下所示，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java">Private <span class="hljs-keyword">void</span> <span class="hljs-title function_">execute</span> <span class="hljs-params">(Runnable task, <span class="hljs-type">boolean</span> immediate)</span> &#123;<br>    <span class="hljs-type">Boolean</span> <span class="hljs-variable">inEventLoop</span> <span class="hljs-operator">=</span> inEventLoop ();  <span class="hljs-comment">//判断执行器线程是否已经在运行</span><br>    AddTask (task); 	<span class="hljs-comment">//将任务提交到队列中</span><br>    If (! InEventLoop) &#123;		<span class="hljs-comment">//如果执行器未在运行，则尝试启动线程。</span><br>        StartThread ();		<span class="hljs-comment">//启动线程最终会调用 doStartThread ()，如上文所示，会不断的消耗任务队列中的任务。</span><br>        If (isShutdown ()) &#123;<br>            <span class="hljs-type">Boolean</span> <span class="hljs-variable">reject</span> <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>;<br>            Try &#123;<br>                If (removeTask (task)) &#123;<br>                    Reject = <span class="hljs-literal">true</span>;<br>                &#125;<br>            &#125; <span class="hljs-keyword">catch</span> (UnsupportedOperationException e) &#123;<br>            &#125;<br>            If (reject) &#123;<br>                Reject ();<br>            &#125;<br>        &#125;<br>    &#125;<br>    If (! AddTaskWakesUp &amp;&amp; immediate) &#123;<br>        Wakeup (inEventLoop);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" class="category-chain-item">技术框架</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Netty/" class="print-no-link">#Netty</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/06/03/Netty/3.8-ChannelOutboundBuffer/" title="3.8-ChannelOutboundBuffer">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">3.8-ChannelOutboundBuffer</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/06/02/Netty/2.2-EventLoop(Group)/" title="2.2-EventLoop(Group)">
+                        <span class="hidden-mobile">2.2-EventLoop(Group)</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
